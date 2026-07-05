@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useStore } from "../stores/store";
-import { api } from "../services/api";
+
 import { Table } from "../components/Table";
 import { Card } from "../components/Card";
 import { RefreshCw } from "lucide-react";
@@ -15,10 +15,7 @@ export function AuditLogs() {
   const fetchLogs = async () => {
     setLoading(true);
     try {
-      await api.getAuditLogs(actionFilter || undefined, entityFilter || undefined);
-      store.setUser(store.user); // Mock trigger reload
-      // Set logs locally or let store manage
-      store.fetchAuditLogs();
+      await store.fetchAuditLogs();
     } catch {
       toast.error("Failed to load audit trails");
     } finally {

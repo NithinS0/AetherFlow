@@ -62,6 +62,8 @@ class User(Base):
 
     @property
     def role(self) -> str:
+        if getattr(self, "_dynamic_role", None):
+            return self._dynamic_role
         if self.email in ["admin@aetherflow.io", "admin@aetherflow.com"]:
             return "Administrator"
         if self.email == "operator@aetherflow.com":

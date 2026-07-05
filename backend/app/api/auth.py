@@ -109,8 +109,12 @@ async def logout(current_user: User = Depends(get_current_user), db: AsyncSessio
 
 @router.post("/forgot-password")
 async def forgot_password(req: ForgotPasswordRequest):
-    # In Phase 1 we return mock success
-    return {"message": f"Password reset email dispatched to {req.email}"}
+    try:
+        await supabase_service.auth_reset_password(req.email)
+        return {"message": f"Password reset email dispatched to {req.email}"}
+    except Exception as e:
+        logger.warning(f"Supabase password reset failed for {req.email} ({e})")
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Failed to dispatch password reset email")
 
 @router.post("/refresh", response_model=Token)
 async def refresh_token(

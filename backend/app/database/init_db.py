@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from app.models import User, Organization, Team, Project, Role, Permission, role_permissions, team_members, ProjectMember, RetryPolicy, Queue
 from app.core.security import get_password_hash
+from app.core.config import settings
 
 async def init_db(db: AsyncSession) -> None:
     # 1. Seed Permissions
@@ -77,58 +78,59 @@ async def init_db(db: AsyncSession) -> None:
         await db.flush()
 
     # 5. Seed Default Admin User & Demo Accounts
-    demo_users = [
-        ("admin@aetherflow.io", "admin123", "AetherFlow Administrator", "Administrator"),
-        ("admin@aetherflow.com", "enterprise2026", "Administrator", "Administrator"),
-        ("operator@aetherflow.com", "enterprise2026", "Operator", "Operator"),
-        ("viewer@aetherflow.com", "enterprise2026", "Viewer", "Viewer"),
-    ]
-    admin = None
-    seeded_users = []
-    for u_email, u_pass, u_name, _ in demo_users:
-        user_res = await db.execute(select(User).filter(User.email == u_email))
-        u_obj = user_res.scalars().first()
-        if not u_obj:
-            u_obj = User(
+    admin_id = None
+    if settings.SEED_DEMO_DATA:
+        demo_users = [
+            ("admin@aetherflow.io", "admin123", "AetherFlow Administrator", "Administrator"),
+            ("admin@aetherflow.com", "enterprise2026", "Administrator", "Administrator"),
+            ("operator@aetherflow.com", "enterprise2026", "Operator", "Operator"),
+            ("viewer@aetherflow.com", "enterprise2026", "Viewer", "Viewer"),
+        ]
+        seeded_users = []
+        for u_email, u_pass, u_name, _ in demo_users:
+            user_res = await db.execute(select(User).filter(User.email == u_email))
+            u_obj = user_res.scalars().first()
+            if not u_obj:
+                u_obj = User(
+                    id=uuid.uuid4(),
+                    email=u_email,
+                    hashed_password=get_password_hash(u_pass),
+                    full_name=u_name,
+                    avatar_url=f"https://api.aetherflow.io/avatars/{u_email.split('@')[0]}.png",
+                    organization_id=org.id
+                )
+                db.add(u_obj)
+                await db.flush()
+            else:
+                if not getattr(u_obj, "organization_id", None):
+                    u_obj.organization_id = org.id
+            if u_email == "admin@aetherflow.io":
+                admin_id = u_obj.id
+            seeded_users.append(u_obj)
+
+        # 6. Seed default Team
+        team_res = await db.execute(select(Team).filter(Team.name == "Core DevOps Engineers", Team.organization_id == org.id))
+        team = team_res.scalars().first()
+        if not team:
+            team = Team(
                 id=uuid.uuid4(),
-                email=u_email,
-                hashed_password=get_password_hash(u_pass),
-                full_name=u_name,
-                avatar_url=f"https://api.aetherflow.io/avatars/{u_email.split('@')[0]}.png",
-                organization_id=org.id
+                name="Core DevOps Engineers",
+                organization_id=org.id,
+                team_lead_id=admin_id
             )
-            db.add(u_obj)
+            db.add(team)
             await db.flush()
-        else:
-            if not getattr(u_obj, "organization_id", None):
-                u_obj.organization_id = org.id
-        if u_email == "admin@aetherflow.io":
-            admin = u_obj
-        seeded_users.append(u_obj)
 
-    # 6. Seed default Team
-    team_res = await db.execute(select(Team).filter(Team.name == "Core DevOps Engineers", Team.organization_id == org.id))
-    team = team_res.scalars().first()
-    if not team:
-        team = Team(
-            id=uuid.uuid4(),
-            name="Core DevOps Engineers",
-            organization_id=org.id,
-            team_lead_id=admin.id
-        )
-        db.add(team)
-        await db.flush()
-
-    # Add All Demo Users to Team
-    for u_obj in seeded_users:
-        link_res = await db.execute(
-            select(1).select_from(team_members)
-            .filter(team_members.c.team_id == team.id, team_members.c.user_id == u_obj.id)
-        )
-        if not link_res.scalar():
-            await db.execute(
-                team_members.insert().values(team_id=team.id, user_id=u_obj.id)
+        # Add All Demo Users to Team
+        for u_obj in seeded_users:
+            link_res = await db.execute(
+                select(1).select_from(team_members)
+                .filter(team_members.c.team_id == team.id, team_members.c.user_id == u_obj.id)
             )
+            if not link_res.scalar():
+                await db.execute(
+                    team_members.insert().values(team_id=team.id, user_id=u_obj.id)
+                )
 
     # 7. Seed default Project
     proj_res = await db.execute(select(Project).filter(Project.name == "Main Scheduling Hub", Project.organization_id == org.id))
@@ -146,18 +148,19 @@ async def init_db(db: AsyncSession) -> None:
         await db.flush()
 
     # Add Demo Users to Project with roles
-    for idx, (u_email, _, _, role_name) in enumerate(demo_users):
-        u_obj = seeded_users[idx]
-        proj_mem_res = await db.execute(
-            select(ProjectMember).filter(ProjectMember.project_id == proj.id, ProjectMember.user_id == u_obj.id)
-        )
-        if not proj_mem_res.scalars().first():
-            role_obj = roles_map.get(role_name, roles_map["Viewer"])
-            db.add(ProjectMember(
-                project_id=proj.id,
-                user_id=u_obj.id,
-                role_id=role_obj.id
-            ))
+    if settings.SEED_DEMO_DATA:
+        for idx, (u_email, _, _, role_name) in enumerate(demo_users):
+            u_obj = seeded_users[idx]
+            proj_mem_res = await db.execute(
+                select(ProjectMember).filter(ProjectMember.project_id == proj.id, ProjectMember.user_id == u_obj.id)
+            )
+            if not proj_mem_res.scalars().first():
+                role_obj = roles_map.get(role_name, roles_map["Viewer"])
+                db.add(ProjectMember(
+                    project_id=proj.id,
+                    user_id=u_obj.id,
+                    role_id=role_obj.id
+                ))
 
     # --- Phase 2: Seeding Retry Policies and Default Queues ---
 

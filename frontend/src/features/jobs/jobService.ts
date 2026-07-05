@@ -5,13 +5,19 @@ export interface Job {
   retry_count: number;
 }
 
+
 export const jobService = {
   getJobs: async (queueId: string): Promise<Job[]> => {
-    // API mock mapping client logic
-    return [
-      { id: "1", queue_id: queueId, status: "completed", retry_count: 0 },
-      { id: "2", queue_id: queueId, status: "queued", retry_count: 1 }
-    ];
+    // If the endpoint is /jobs?queue_id=... or similar in API
+    // We will just do a direct fetch since the queueId is what's provided
+    const response = await fetch(`/api/v1/jobs?queue_id=${queueId}`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("aetherflow_token")}`
+      }
+    });
+    if (!response.ok) return [];
+    const result = await response.json();
+    return result.data || result || [];
   },
 
   claimJob: async (queueId: string, workerId: string): Promise<Job> => {

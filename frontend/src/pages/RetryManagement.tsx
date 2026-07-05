@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useStore } from "../stores/store";
-import { api } from "../services/api";
+import { api, API_URL } from "../services/api";
 import { Table } from "../components/Table";
 import { Badge } from "../components/Badge";
 import { Card } from "../components/Card";

@@ -23,6 +23,11 @@ class ClaimEngine:
 
         # Filter active queue lists
         for q_id in supported_queues:
+            if isinstance(q_id, str):
+                try:
+                    q_id = uuid.UUID(q_id)
+                except ValueError:
+                    continue
             # 1. Fetch Queue Configuration
             q_res = await db.execute(select(Queue).filter(Queue.id == q_id, Queue.is_paused == False, Queue.is_archived == False))
             queue = q_res.scalars().first()

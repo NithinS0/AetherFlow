@@ -1,7 +1,13 @@
-const defaultApiUrl = import.meta.env.VITE_API_URL;
-export const API_URL = defaultApiUrl || (() => {
-  throw new Error("Missing VITE_API_URL environment variable for frontend API requests.");
-})();
+const _rawApiUrl = import.meta.env.VITE_API_URL as string | undefined;
+// Lazy getter: only throw when an actual API call is attempted, not on module load.
+// This allows public/landing pages to render without a backend configured.
+export const API_URL: string = _rawApiUrl ?? "";
+function requireApiUrl(): string {
+  if (!_rawApiUrl) {
+    throw new Error("Missing VITE_API_URL environment variable for frontend API requests.");
+  }
+  return _rawApiUrl;
+}
 
 interface RequestOptions extends RequestInit {
   json?: any;
@@ -59,7 +65,7 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     options.body = JSON.stringify(options.json);
   }
 
-  const response = await fetch(`${API_URL}${path}`, {
+  const response = await fetch(`${requireApiUrl()}${path}`, {
     ...options,
     headers,
   });
@@ -401,7 +407,7 @@ export const api = {
 
   // AI Intelligence Layer
   async createAiConversation(title?: string): Promise<any> {
-    return request("/ai/chat/conversations", {
+    return requestData("/ai/chat/conversations", {
       method: "POST",
       json: { title }
     });
@@ -416,7 +422,7 @@ export const api = {
   },
 
   async sendAiMessage(convId: string, content: string): Promise<any> {
-    return request(`/ai/chat/conversations/${convId}/messages`, {
+    return requestData(`/ai/chat/conversations/${convId}/messages`, {
       method: "POST",
       json: { content }
     });

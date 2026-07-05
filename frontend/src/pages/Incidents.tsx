@@ -561,7 +561,9 @@ export function Incidents() {
                     <Zap size={14} /> AI Failure Analysis
                   </div>
                   <pre style={{ fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.6, whiteSpace: "pre-wrap", margin: 0, fontFamily: "inherit" }}>
-                    {selectedIncident.ai_analysis}
+                    {typeof selectedIncident.ai_analysis === 'string' 
+                      ? selectedIncident.ai_analysis 
+                      : JSON.stringify(selectedIncident.ai_analysis, null, 2)}
                   </pre>
                 </div>
               )}

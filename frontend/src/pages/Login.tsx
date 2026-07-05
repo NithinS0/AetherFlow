@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../services/api";
 import { useStore } from "../stores/store";
@@ -20,6 +20,14 @@ export function Login() {
   const setAuthenticated = useStore((state) => state.setAuthenticated);
   const setUser = useStore((state) => state.setUser);
   const fetchOrgs = useStore((state) => state.fetchOrgs);
+
+  // Always render login in dark mode regardless of user preference
+  useEffect(() => {
+    const html = document.documentElement;
+    const prev = html.getAttribute("data-theme") ?? "dark";
+    html.setAttribute("data-theme", "dark");
+    return () => { html.setAttribute("data-theme", prev); };
+  }, []);
 
   const completeAuth = async (accessToken: string) => {
     localStorage.setItem("aetherflow_token", accessToken);
@@ -63,27 +71,32 @@ export function Login() {
   };
 
   return (
-    <div className="relative min-h-screen w-screen flex flex-col md:flex-row bg-background overflow-hidden">
+    <div className="relative min-h-screen w-screen flex flex-col md:flex-row bg-[#03050c] overflow-hidden">
       
-      {/* Dynamic Ambient Background Mesh */}
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.01)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.01)_1px,transparent_1px)] bg-[size:3rem_3rem] pointer-events-none" />
+      {/* Grid mesh */}
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(to_right,rgba(255,255,255,0.015)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.015)_1px,transparent_1px)] bg-[size:56px_56px]" />
+      {/* Ambient glows */}
+      <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[700px] h-[600px] rounded-full bg-indigo-600/8 blur-[160px]" />
+      <div className="pointer-events-none absolute bottom-0 right-0 w-[500px] h-[500px] rounded-full bg-cyan-600/5 blur-[140px]" />
 
       {/* LEFT SIDE: Branding Showcase & Telemetry Stats */}
-      <div className="hidden md:flex md:w-1/2 flex-col justify-center p-12 relative z-10 border-r border-white/5 bg-gradient-to-b from-primary/5 to-transparent">
-        <div className="absolute top-1/3 left-1/3 -translate-x-1/2 w-[500px] h-[500px] bg-primary/5 rounded-full blur-[100px] pointer-events-none" />
+      <div className="hidden md:flex md:w-1/2 flex-col justify-between py-16 px-12 relative z-10 border-r border-white/[0.06] bg-gradient-to-b from-indigo-950/20 to-transparent">
+        <div className="pointer-events-none absolute top-1/3 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-indigo-500/6 rounded-full blur-[100px]" />
 
-        <div className="flex w-full items-center justify-center">
-          <BrandLogo variant="full" className="h-24 lg:h-28 w-auto object-contain" />
+        <div className="flex items-center">
+          <BrandLogo variant="full" className="h-[80px] w-auto object-contain" />
         </div>
 
-        <div className="my-auto space-y-8">
-          <div className="space-y-4">
-            <h1 className="text-4xl lg:text-5xl font-black text-white tracking-tight leading-tight">
-              Distributed Job <br />
-              Scheduling Platform
+        <div className="flex-1 flex flex-col justify-center space-y-8 py-12">
+          <div className="space-y-5">
+            <h1 className="text-4xl lg:text-5xl font-black text-white tracking-[-0.03em] leading-[1.1]">
+              Distributed Job{" "}<br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-blue-400">
+                Scheduling Platform
+              </span>
             </h1>
-            <p className="text-sm text-zinc-400 max-w-md leading-relaxed">
-              Log in to manage queues, jobs, workers, retries, and dead-letter recovery powered by Postgres SKIP LOCKED scheduling primitives.
+            <p className="text-[15px] text-zinc-400 max-w-md leading-relaxed">
+              Log in to manage queues, jobs, workers, retries, and dead-letter recovery — powered by Postgres SKIP LOCKED scheduling primitives.
             </p>
           </div>
 
@@ -116,6 +129,12 @@ export function Login() {
           </div>
         </div>
 
+        {/* Bottom trust indicators */}
+        <div className="flex items-center gap-6 text-[11px] font-mono text-zinc-600">
+          <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" /> 99.999% Uptime</span>
+          <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-indigo-500" /> 0 Duplicates</span>
+          <span className="flex items-center gap-1.5"><span className="w-1.5 h-1.5 rounded-full bg-cyan-500" /> &lt; 1.2ms Latency</span>
+        </div>
       </div>
 
       {/* RIGHT SIDE: Authentication Card Layout */}
@@ -127,7 +146,7 @@ export function Login() {
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-3/4 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
           
           <div className="flex flex-col items-center mb-8 text-center relative z-10">
-            <BrandLogo variant="icon" className="md:hidden w-20 h-20 object-contain mb-4" />
+            <BrandLogo variant="full" className="md:hidden h-[80px] w-auto object-contain mb-4" />
             <h2 className="text-2xl font-black tracking-tight text-primary">
               {formMode === "signup" ? "Platform Registration" :
                formMode === "login" ? "Scheduler Control Plane" :

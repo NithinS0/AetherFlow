@@ -7,6 +7,7 @@ from app.database.session import async_engine, Base, AsyncSessionLocal
 from app.database.init_db import init_db
 from app.api import auth, organizations, teams, projects, roles, notifications, audit, queues, jobs, retry_policies, workers, executions, reliability, chaos, operations, ai_chat, ai_recommendations, ai_reports, ai_agents, incidents, channels, presence, approvals, analytics, search, settings as app_settings, plugins, api_keys, dead_letter
 from app.api.sockets import socket_manager
+from app.api.errors import register_exception_handlers
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("aetherflow.main")
@@ -21,10 +22,15 @@ async def lifespan(app: FastAPI):
     logger.info("Seeding initial database configurations...")
     async with AsyncSessionLocal() as session:
         await init_db(session)
+
+    # Start the distributed scheduler coordinator
+    from app.scheduler.scheduler_manager import scheduler_manager
+    await scheduler_manager.start()
         
     yield
     
     # --- Shutdown ---
+    await scheduler_manager.shutdown()
     logger.info("Shutdown operations complete.")
 
 app = FastAPI(
@@ -41,6 +47,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Exception Handlers Registration
+register_exception_handlers(app)
 
 # Router Registrations
 app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])

@@ -195,8 +195,8 @@ export function Layout() {
       <aside className="w-64 glass-panel flex flex-col justify-between shrink-0 relative z-25 overflow-hidden">
         <div>
           {/* Brand Logo Header */}
-          <div className="px-6 pt-5 pb-3 flex items-center justify-center">
-            <BrandLogo variant="full" className="h-20 w-auto object-contain" />
+          <div className="px-5 pt-5 pb-4 flex items-center justify-center border-b border-white/[0.04]">
+            <BrandLogo variant="full" className="h-14 w-auto object-contain" />
           </div>
           
           {/* Workspace Switcher / Dropdown */}

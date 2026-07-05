@@ -37,7 +37,7 @@ async def register_worker():
     async with AsyncSessionLocal() as db:
         # Load all queue IDs to support
         res = await db.execute(select(Queue.id).filter(Queue.is_archived == False))
-        queue_ids = [r[0] for r in res.all()]
+        queue_ids = [str(r[0]) for r in res.all()]
 
         worker = Worker(
             id=worker_id,

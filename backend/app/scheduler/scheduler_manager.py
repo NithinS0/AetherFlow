@@ -55,7 +55,7 @@ class SchedulerManager:
                 # Find pending jobs ready to be queued
                 stmt = (
                     select(Job)
-                    .filter(Job.status == "pending", Job.run_at <= now)
+                    .filter(Job.status == "pending", Job.scheduled_time <= now)
                 )
                 res = await db.execute(stmt)
                 jobs = res.scalars().all()

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { motion, type Variants } from "framer-motion";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 
 interface BreadcrumbItem { label: string; href?: string }
 
@@ -11,7 +11,7 @@ interface PublicPageProps {
   children: React.ReactNode;
 }
 
-export function PublicPage({ title, description, breadcrumbs = [], children }: PublicPageProps) {
+export function PublicPage({ title, description, children }: PublicPageProps) {
   const location = useLocation();
 
   useEffect(() => {
@@ -45,24 +45,15 @@ export function PublicPage({ title, description, breadcrumbs = [], children }: P
   };
 
   return (
-    <main className="dark bg-background text-zinc-300 min-h-screen selection:bg-primary/30 selection:text-white font-sans">
+    // Use a transparent wrapper so child pages control their own background.
+    // We still apply selection colours and font baseline here.
+    <div className="min-h-screen selection:bg-indigo-500/30 selection:text-white font-sans">
       <motion.div key={location.pathname} initial="initial" animate="enter" exit="exit" variants={variants} className="page-motion">
-        {breadcrumbs && breadcrumbs.length > 0 && (
-          <div className="max-w-7xl mx-auto px-6 py-3 text-sm text-zinc-500 relative z-20">
-            {breadcrumbs.map((b, i) => (
-              <span key={i} className="inline-flex items-center gap-2">
-                {i > 0 && <span className="text-zinc-400">›</span>}
-                {b.href ? <Link to={b.href} className="hover:text-zinc-700">{b.label}</Link> : <span className="text-zinc-700 font-semibold">{b.label}</span>}
-              </span>
-            ))}
-          </div>
-        )}
-
         <div className="relative">
           {children}
         </div>
       </motion.div>
-    </main>
+    </div>
   );
 }
 

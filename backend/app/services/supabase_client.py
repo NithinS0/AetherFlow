@@ -32,7 +32,7 @@ class SupabaseService:
             try:
                 res = self.supabase.auth.sign_up({"email": email, "password": password})
                 return {
-                    "id": UUID(res.user.id),
+                    "id": uuid.UUID(res.user.id),
                     "email": res.user.email,
                     "created_at": res.user.created_at
                 }
@@ -55,6 +55,18 @@ class SupabaseService:
             except Exception as e:
                 raise ValueError(f"Supabase Sign-In failed: {e}")
         raise RuntimeError("Supabase is not configured. Login endpoint cannot run without SUPABASE_URL and keys.")
+
+    async def auth_reset_password(self, email: str) -> None:
+        """
+        Dispatches a password reset email via Supabase.
+        """
+        if self.is_configured():
+            try:
+                self.supabase.auth.reset_password_email(email)
+            except Exception as e:
+                raise ValueError(f"Supabase Password Reset failed: {e}")
+        else:
+            raise RuntimeError("Supabase is not configured. Reset endpoint cannot run without SUPABASE_URL and keys.")
 
     async def upload_file(self, bucket: str, path: str, file_bytes: bytes) -> str:
         """
