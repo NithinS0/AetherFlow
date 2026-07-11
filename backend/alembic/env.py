@@ -28,8 +28,8 @@ from app.core.config import settings
 # for 'autogenerate' support
 target_metadata = Base.metadata
 
-# Set the sqlalchemy url dynamically
-config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
+# Set the sqlalchemy url dynamically (escaping '%' as '%%' for configparser)
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL.replace("%", "%%"))
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
