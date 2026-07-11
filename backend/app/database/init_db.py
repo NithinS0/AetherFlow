@@ -214,7 +214,7 @@ async def init_db(db: AsyncSession) -> None:
                 is_paused=False,
                 is_archived=False,
                 retry_policy_id=pol.id,
-                created_by_id=admin.id,
+                created_by_id=admin_id,
                 tags=q_conf["tags"]
             )
             db.add(queue)
