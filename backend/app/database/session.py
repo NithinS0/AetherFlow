@@ -15,6 +15,20 @@ if db_url.startswith("sqlite"):
             db_path = os.path.abspath(os.path.join(base_dir, path_part))
             db_url = f"sqlite+aiosqlite:///{db_path}"
 
+import logging
+logger = logging.getLogger("aetherflow.database")
+
+try:
+    if "@" in db_url:
+        scheme, rest = db_url.split("://", 1)
+        auth, host_path = rest.split("@", 1)
+        user = auth.split(":", 1)[0] if ":" in auth else auth
+        logger.info(f"Connecting to database: {scheme}://{user}:***@{host_path}")
+    else:
+        logger.info(f"Connecting to database: {db_url}")
+except Exception:
+    logger.info("Connecting to database...")
+
 async_engine = create_async_engine(db_url, echo=False, pool_pre_ping=True)
 
 AsyncSessionLocal = async_sessionmaker(
